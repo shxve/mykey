@@ -110,7 +110,7 @@ void cogs_mikai_scene_debug_on_enter(void* context) {
 
         furi_string_cat(text, "\n--- Raw data saved in SD ---\n");
         furi_string_cat(text, "Use back to exit, or\n");
-        furi_string_cat(text, "check logs for raw data");
+        furi_string_cat(text, "Raw data saved to SD card");
     }
 
     text_box_set_text(text_box, furi_string_get_cstr(text));

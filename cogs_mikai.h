@@ -70,7 +70,6 @@ typedef struct {
 
     MyKeyData mykey;
     char text_buffer[32];
-    uint32_t temp_credit_value; 
 } COGSMyKaiApp;
 
 // Scene handler function declarations

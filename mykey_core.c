@@ -49,10 +49,10 @@ static uint8_t get_current_transaction_offset(MyKeyData* key) {
     }
 
     // Decode transaction pointer
-    uint32_t current = block3C ^ (key->eeprom[0x07] & 0x00FFFFFF);
+    uint32_t current = block3C ^ key->eeprom[0x07];
     encode_decode_block(&current);
 
-    if((current & 0x00FF0000 >> 16) > 0x07) {
+    if(((current & 0x00FF0000) >> 16) > 0x07) {
         // Out of range
         return 0x07;
     } else {
@@ -195,9 +195,15 @@ bool mykey_add_cents(MyKeyData* key, uint16_t cents, uint8_t day, uint8_t month,
     }
 
     // Calculate current credit
-    uint16_t precedent_credit;
+    uint16_t precedent_credit = 0;
     uint16_t actual_credit = mykey_get_current_credit(key);
     FURI_LOG_I(TAG, "Current credit: %u cents", actual_credit);
+
+    // Check for overflow before adding
+    if((uint32_t)actual_credit + cents > 65535) {
+        FURI_LOG_E(TAG, "Credit would overflow uint16: %u + %u > 65535", actual_credit, cents);
+        return false;
+    }
 
     // Get current transaction position
     uint8_t current = get_current_transaction_offset(key);
@@ -243,7 +249,7 @@ bool mykey_add_cents(MyKeyData* key, uint16_t cents, uint8_t day, uint8_t month,
 
         FURI_LOG_I(TAG, "Transaction %u: %u cents at block 0x%02X",
                    current, actual_credit, 0x34 + current);
-    } while(cents > 5);
+    } while(cents > 0);
 
     FURI_LOG_I(TAG, "Final credit: %u cents, precedent: %u cents",
                actual_credit, precedent_credit);
@@ -272,7 +278,7 @@ bool mykey_add_cents(MyKeyData* key, uint16_t cents, uint8_t day, uint8_t month,
     key->eeprom[0x3C] = current << 16;
     calculate_block_checksum(&key->eeprom[0x3C], 0x3C);
     encode_decode_block(&key->eeprom[0x3C]);
-    key->eeprom[0x3C] ^= key->eeprom[0x07] & 0x00FFFFFF;
+    key->eeprom[0x3C] ^= key->eeprom[0x07];
 
     // Increment operation counter (block 0x12, lower 24 bits)
     uint32_t op_count = (key->eeprom[0x12] & 0x00FFFFFF) + 1;

@@ -57,7 +57,7 @@ static bool parse_euros_to_cents(const char* text, uint16_t* cents) {
     }
 
     uint32_t total_cents = integer_part * 100 + decimal_part;
-    if(total_cents > 99999) return false; // Max 999.99 EUR
+    if(total_cents > 65535) return false; // Max 655.35 EUR (uint16 limit)
 
     *cents = (uint16_t)total_cents;
     return true;
@@ -165,7 +165,7 @@ bool cogs_mikai_scene_set_credit_on_event(void* context, SceneManagerEvent event
                 popup_set_header(popup, "Error", 64, 10, AlignCenter, AlignTop);
                 popup_set_text(
                     popup,
-                    "Invalid amount\nEnter 0.00-999.99",
+                    "Invalid amount\nEnter 0.00-655.35",
                     64,
                     25,
                     AlignCenter,

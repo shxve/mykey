@@ -22,7 +22,7 @@ bool mykey_read_from_nfc(COGSMyKaiApp* app) {
     }
 
     // Check if it's SRIX4K (ST25TBX512 or ST25TB04K or ST25TBX4K)
-    if(type != St25tbTypeX512 && type != St25tbType04k && type != St25tbTypeX4k) {
+    if(type != St25tbType04k && type != St25tbTypeX4k) {
         FURI_LOG_E(TAG, "Card is not SRIX4K compatible, type: %d", type);
         nfc_free(nfc);
         return false;
@@ -114,7 +114,7 @@ bool mykey_write_to_nfc(COGSMyKaiApp* app) {
     }
 
     // Check if it's SRIX4K
-    if(type != St25tbTypeX512 && type != St25tbType04k && type != St25tbTypeX4k) {
+    if(type != St25tbType04k && type != St25tbTypeX4k) {
         FURI_LOG_E(TAG, "Card is not SRIX4K compatible, type: %d", type);
         nfc_free(nfc);
         return false;
@@ -126,8 +126,9 @@ bool mykey_write_to_nfc(COGSMyKaiApp* app) {
     }
 
     // Write each block
-    // Note: Block 0 (UID) is typically read-only, so we skip it
-    for(size_t i = 1; i < num_blocks; i++) {
+    // Skip blocks 0-6: block 0 is UID (read-only), blocks 1-4 are OTP (write-once),
+    // block 5 is LockID, block 6 is OTP counter. Blocks 7+ are EEPROM (freely writable).
+    for(size_t i = 7; i < num_blocks; i++) {
         // Byte-swap block back to little-endian for ST25TB card
         // Our internal format is big-endian, ST25TB expects little-endian
         uint32_t block_to_write = __bswap32(app->mykey.eeprom[i]);
